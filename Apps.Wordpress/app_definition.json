@@ -1,0 +1,16 @@
+{
+  "definition": [
+    {
+      "name": "login",
+      "description": "Your login in Wordpress"
+    },
+    {
+      "name": "applicationPassword",
+      "description": "Your application password"
+    }
+  ],
+  "communicationWrapperType": "HttpWrapper",
+  "authenticationType": null,
+  "authenticationDefition": null,
+  "authenticationResponseMapping": null
+}

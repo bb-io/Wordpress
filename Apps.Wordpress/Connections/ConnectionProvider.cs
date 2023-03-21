@@ -19,6 +19,6 @@ namespace Apps.Wordpress.Connections
         public string ConnectionName => "Blackbird";
 
 
-        public IEnumerable<string> ConnectionProperties => new[] { "login", "applicationPassword" };
+        public IEnumerable<string> ConnectionProperties => new[] { "url", "login", "applicationPassword" };
     }
 }

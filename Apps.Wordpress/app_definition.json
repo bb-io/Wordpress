@@ -2,7 +2,7 @@
   "definition": [
     {
       "name": "url",
-      "description": "Link of your worpdress API"
+      "description": "Link of your Worpdress API"
     },
     {
       "name": "login",

@@ -6,6 +6,7 @@ using Apps.Wordpress.Dtos;
 using Newtonsoft.Json.Linq;
 using WordPressPCL;
 using System;
+using Blackbird.Applications.Sdk.Common.Actions;
 
 namespace Apps.Wordpress
 {
@@ -13,10 +14,10 @@ namespace Apps.Wordpress
     public class Actions
     {
         [Action("Get all pages", Description = "Get all pages content")]
-        public AllPagesResponse GetAllPages(string url, string login, AuthenticationCredentialsProvider authenticationCredentialsProvider, 
+        public AllPagesResponse GetAllPages(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders, 
             [ActionParameter] AllPagesRequest input)
         {
-            var client = new CustomWordpressClient(url, login, authenticationCredentialsProvider.Value);
+            var client = new CustomWordpressClient(authenticationCredentialsProviders);
             var pages = client.Pages.GetAllAsync().Result;
             var pagesDtos = pages.Select(p => new PageDto()
             {
@@ -32,10 +33,10 @@ namespace Apps.Wordpress
         }
 
         [Action("Get page", Description = "Get page by id")]
-        public PageResponse GetPageById(string url, string login, AuthenticationCredentialsProvider authenticationCredentialsProvider,
+        public PageResponse GetPageById(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
             [ActionParameter] PageRequest input)
         {
-            var client = new CustomWordpressClient(url, login, authenticationCredentialsProvider.Value);
+            var client = new CustomWordpressClient(authenticationCredentialsProviders);
             var page = client.Pages.GetByIDAsync(input.PageId).Result;
 
             return new PageResponse()
@@ -47,10 +48,10 @@ namespace Apps.Wordpress
         }
 
         [Action("Get post", Description = "Get post by id")]
-        public PostResponse GetPostById(string url, string login, AuthenticationCredentialsProvider authenticationCredentialsProvider,
+        public PostResponse GetPostById(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
             [ActionParameter] PostRequest input)
         {
-            var client = new CustomWordpressClient(url, login, authenticationCredentialsProvider.Value);
+            var client = new CustomWordpressClient(authenticationCredentialsProviders);
             var page = client.Posts.GetByIDAsync(input.PostId).Result;
 
             return new PostResponse()

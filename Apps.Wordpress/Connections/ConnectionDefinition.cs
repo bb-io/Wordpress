@@ -1,10 +1,5 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Wordpress.Connections
 {
@@ -12,16 +7,16 @@ namespace Apps.Wordpress.Connections
     {
         public IEnumerable<ConnectionPropertyGroup> ConnectionPropertyGroups => new List<ConnectionPropertyGroup>()
         {
-            new ConnectionPropertyGroup
+            new()
             {
                 Name = "Wordpress login",
                 AuthenticationType = ConnectionAuthenticationType.Undefined,
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new ConnectionProperty("url"),
-                    new ConnectionProperty("login"),
-                    new ConnectionProperty("applicationPassword")
+                    new("url"),
+                    new("login"),
+                    new("applicationPassword")
                 }
             }
         };

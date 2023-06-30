@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
 
 namespace Apps.Wordpress.Models.Requests
 {
     public class PostRequest
     {
-        public string PostId { get; set; }
+        [Display("Post id")] public string PostId { get; set; }
     }
 }

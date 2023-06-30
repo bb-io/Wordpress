@@ -1,9 +1,4 @@
 ﻿using Blackbird.Applications.Sdk.Common.Authentication;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using WordPressPCL;
 
 namespace Apps.Wordpress
@@ -21,7 +16,7 @@ namespace Apps.Wordpress
             var login = authenticationCredentialsProviders.First(p => p.KeyName == "login").Value;
             var appPassword = authenticationCredentialsProviders.First(p => p.KeyName == "applicationPassword").Value;
 
-            this.Auth.UseBasicAuth(login, appPassword);
+            Auth.UseBasicAuth(login, appPassword);
         }
     }
 }

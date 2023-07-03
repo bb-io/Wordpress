@@ -8,7 +8,7 @@ namespace Apps.Wordpress
         private static string GetUrl(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
         {
             var url = authenticationCredentialsProviders.First(p => p.KeyName == "url").Value;
-            return $"{url.TrimEnd('/')}/";
+            return $"{url.TrimEnd('/')}/wp-json/";
         }
 
         public CustomWordpressClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) : base(GetUrl(authenticationCredentialsProviders))

@@ -1,4 +1,6 @@
-﻿using Apps.Wordpress.Models.Requests;
+﻿using System.Text;
+using Apps.Wordpress.Models.Requests;
+using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
 using Apps.Wordpress.Models.Responses.Entities;
 using Blackbird.Applications.Sdk.Common;
@@ -34,6 +36,17 @@ public class PageActions
         var page = await client.Pages.GetByIDAsync(input.PageId);
 
         return new(page);
+    }    
+    
+    [Action("Get page as HTML", Description = "Get page by id as HTML file")]
+    public async Task<FileResponse> GetPageByIdAsHtml(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] PageRequest input)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var page = await client.Pages.GetByIDAsync(input.PageId);
+
+        return new(page.Title.Rendered,  Encoding.UTF8.GetBytes(page.Content.Rendered));
     }
 
     #endregion
@@ -50,6 +63,57 @@ public class PageActions
         {
             Title = new(request.Title),
             Content = new(request.Content)
+        });
+
+        return new(page);
+    }
+    
+    [Action("Create page from HTML", Description = "Create page from HTML file")]
+    public async Task<WordPressItem> CreatePageFromHtml(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] CreateFromFileRequest request)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var page = await client.Pages.CreateAsync(new()
+        {
+            Title = new(request.Title),
+            Content = new(Encoding.UTF8.GetString(request.File))
+        });
+
+        return new(page);
+    }
+
+    #endregion
+
+    #region Update
+
+    [Action("Update page", Description = "Update page")]
+    public async Task<WordPressItem> UpdatePage(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] UpdateRequest request)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var page = await client.Pages.UpdateAsync(new()
+        {
+            Id = request.Id,
+            Title = new(request.Title),
+            Content = new(request.Content)
+        });
+
+        return new(page);
+    }    
+    
+    [Action("Update page from HTML", Description = "Update page from HTML file")]
+    public async Task<WordPressItem> UpdatePageFromHtml(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] UpdateFromFileRequest request)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var page = await client.Pages.UpdateAsync(new()
+        {
+            Id = request.Id,
+            Title = new(request.Title),
+            Content = new(Encoding.UTF8.GetString(request.File))
         });
 
         return new(page);

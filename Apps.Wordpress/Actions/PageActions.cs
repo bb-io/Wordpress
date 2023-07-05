@@ -15,6 +15,38 @@ public class PageActions
 {
     #region Get
 
+    [Action("Get pages created in last hours", Description = "Get all pages that were created in last specified number of hours")]
+    public async Task<AllPagesResponse> GetFilteredPagesByCreateDate(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] [Display("Hours")] int hoursNumber)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var pages = await client.Pages.GetAllAsync(true, true);
+
+        return new()
+        {
+            Pages = pages
+                .Where(x => x.DateGmt.AddHours(hoursNumber) >= DateTime.Now.ToUniversalTime())
+                .Select(p => new WordPressItem(p)).ToList()
+        };
+    }       
+    
+    [Action("Get pages modified in last hours", Description = "Get all pages that were modified in last specified number of hours")]
+    public async Task<AllPagesResponse> GetFilteredPagesByModifyDate(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] [Display("Hours")] int hoursNumber)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var pages = await client.Pages.GetAllAsync(true, true);
+
+        return new()
+        {
+            Pages = pages
+                .Where(x => x.ModifiedGmt.AddHours(hoursNumber) >= DateTime.Now.ToUniversalTime())
+                .Select(p => new WordPressItem(p)).ToList()
+        };
+    }    
+    
     [Action("Get all pages", Description = "Get all pages content")]
     public async Task<AllPagesResponse> GetAllPages(
         IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)

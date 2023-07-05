@@ -27,6 +27,38 @@ public class PostActions
             Posts = posts.Select(x => new WordPressItem(x)).ToList()
         };
     }
+    
+    [Action("Get posts created in last hours", Description = "Get all posts that were created in last specified number of hours")]
+    public async Task<AllPostsResponse> GetFilteredPostsByCreateDate(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] [Display("Hours")] int hoursNumber)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var posts = await client.Posts.GetAllAsync(true, true);
+
+        return new()
+        {
+            Posts = posts
+                .Where(x => x.DateGmt.AddHours(hoursNumber) >= DateTime.Now.ToUniversalTime())
+                .Select(p => new WordPressItem(p)).ToList()
+        };
+    }       
+    
+    [Action("Get posts modified in last hours", Description = "Get all posts that were modified in last specified number of hours")]
+    public async Task<AllPostsResponse> GetFilteredPostsByModifyDate(
+        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        [ActionParameter] [Display("Hours")] int hoursNumber)
+    {
+        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var posts = await client.Posts.GetAllAsync(true, true);
+
+        return new()
+        {
+            Posts = posts
+                .Where(x => x.ModifiedGmt.AddHours(hoursNumber) >= DateTime.Now.ToUniversalTime())
+                .Select(p => new WordPressItem(p)).ToList()
+        };
+    }    
 
     [Action("Get post", Description = "Get post by id")]
     public async Task<WordPressItem> GetPostById(

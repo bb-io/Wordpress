@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Apps.Wordpress.Extension;
 using Apps.Wordpress.Models.Requests;
 using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
@@ -46,7 +47,9 @@ public class PageActions
         var client = new CustomWordpressClient(authenticationCredentialsProviders);
         var page = await client.Pages.GetByIDAsync(input.PageId);
 
-        return new(page.Title.Rendered,  Encoding.UTF8.GetBytes(page.Content.Rendered));
+        var html = (page.Title.Rendered, page.Content.Rendered).AsHtml();
+        
+        return new(Encoding.UTF8.GetBytes(html));
     }
 
     #endregion
@@ -74,10 +77,14 @@ public class PageActions
         [ActionParameter] CreateFromFileRequest request)
     {
         var client = new CustomWordpressClient(authenticationCredentialsProviders);
+
+        var html = Encoding.UTF8.GetString(request.File);
+        var htmlDocument = html.AsHtmlDocument();
+        
         var page = await client.Pages.CreateAsync(new()
         {
-            Title = new(request.Title),
-            Content = new(Encoding.UTF8.GetString(request.File))
+            Title = new(htmlDocument.GetTitle()),
+            Content = new(htmlDocument.GetBody())
         });
 
         return new(page);
@@ -109,11 +116,15 @@ public class PageActions
         [ActionParameter] UpdateFromFileRequest request)
     {
         var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        
+        var html = Encoding.UTF8.GetString(request.File);
+        var htmlDocument = html.AsHtmlDocument();
+        
         var page = await client.Pages.UpdateAsync(new()
         {
             Id = request.Id,
-            Title = new(request.Title),
-            Content = new(Encoding.UTF8.GetString(request.File))
+            Title = new(htmlDocument.GetTitle()),
+            Content = new(htmlDocument.GetBody())
         });
 
         return new(page);

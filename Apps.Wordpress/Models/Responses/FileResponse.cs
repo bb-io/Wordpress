@@ -1,3 +1,3 @@
 ﻿namespace Apps.Wordpress.Models.Responses;
 
-public record FileResponse(string Title, byte[] File);
+public record FileResponse(byte[] File);

@@ -22,7 +22,7 @@ public class UserDataHandler : BaseInvocable, IAsyncDataSourceHandler
 
         return items
             .Where(x => context.SearchString == null ||
-                        x.Name.Contains(context.SearchString))
+                        x.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .Take(20)
             .ToDictionary(x => x.Id.ToString(), x => x.Name);
     }

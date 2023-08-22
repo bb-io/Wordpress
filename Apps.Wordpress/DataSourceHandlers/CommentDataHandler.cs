@@ -22,7 +22,7 @@ public class CommentDataHandler : BaseInvocable, IAsyncDataSourceHandler
 
         return comments
             .Where(x => context.SearchString == null ||
-                        x.Content.Rendered.Contains(context.SearchString))
+                        x.Content.Rendered.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.Date)
             .Take(20)
             .ToDictionary(x => x.Id.ToString(), x => x.Content.Rendered);

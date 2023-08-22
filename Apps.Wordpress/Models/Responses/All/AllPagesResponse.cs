@@ -1,4 +1,4 @@
-﻿using Apps.Wordpress.Models.Responses.Entities;
+﻿using Apps.Wordpress.Models.Entities;
 
 namespace Apps.Wordpress.Models.Responses.All
 {

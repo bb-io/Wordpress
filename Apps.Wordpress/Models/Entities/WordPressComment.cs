@@ -1,14 +1,14 @@
 ﻿using Blackbird.Applications.Sdk.Common;
 using WordPressPCL.Models;
 
-namespace Apps.Wordpress.Models.Responses.Entities;
+namespace Apps.Wordpress.Models.Entities;
 
 public class WordPressComment
 {
     #region Properties
 
     public int Id { get; }
-    [Display("Post id")] public int PostId { get; }
+    [Display("Post ID")] public int PostId { get; }
     public string Content { get; }
     public string Author { get; }
     public DateTime Date { get; }

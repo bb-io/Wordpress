@@ -1,6 +1,6 @@
 ﻿using WordPressPCL.Models;
 
-namespace Apps.Wordpress.Models.Responses.Entities;
+namespace Apps.Wordpress.Models.Entities;
 
 public class WordPressUser
 {

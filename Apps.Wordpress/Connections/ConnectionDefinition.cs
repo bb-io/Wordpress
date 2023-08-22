@@ -14,14 +14,15 @@ namespace Apps.Wordpress.Connections
                 ConnectionUsage = ConnectionUsage.Actions,
                 ConnectionProperties = new List<ConnectionProperty>()
                 {
-                    new("url"),
-                    new("login"),
-                    new("applicationPassword")
+                    new("url") { DisplayName = "URL" },
+                    new("login") { DisplayName = "Login" },
+                    new("applicationPassword") { DisplayName = "Application password" }
                 }
             }
         };
 
-        public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(Dictionary<string, string> values)
+        public IEnumerable<AuthenticationCredentialsProvider> CreateAuthorizationCredentialsProviders(
+            Dictionary<string, string> values)
         {
             var url = values.First(v => v.Key == "url");
             yield return new AuthenticationCredentialsProvider(

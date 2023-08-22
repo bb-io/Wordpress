@@ -1,23 +1,32 @@
-﻿using Apps.Wordpress.Models.Requests;
+﻿using Apps.Wordpress.Api;
+using Apps.Wordpress.Models.Entities;
+using Apps.Wordpress.Models.Requests.Comment;
 using Apps.Wordpress.Models.Responses.All;
-using Apps.Wordpress.Models.Responses.Entities;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class CommentActions
+public class CommentActions : BaseInvocable
 {
+    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
+        InvocationContext.AuthenticationCredentialsProviders;
+
+    public CommentActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+
     #region Get
 
     [Action("Get all comments", Description = "Get all comments")]
-    public async Task<AllCommentsResponse> GetAllComments(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
+    public async Task<AllCommentsResponse> GetAllComments()
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
-        var comments = await client.Comments.GetAllAsync(true, true);
+        var client = new CustomWordpressClient(Creds);
+        var comments = await client.Comments.GetAllAsync(false, true);
 
         return new()
         {
@@ -25,15 +34,13 @@ public class CommentActions
         };
     }
 
-    [Action("Get comment", Description = "Get comment by id")]
-    public async Task<WordPressComment> GetCommentById(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] [Display("Comment id")] int id)
+    [Action("Get comment", Description = "Get comment by ID")]
+    public async Task<WordPressComment> GetCommentById([ActionParameter] CommentRequest comment)
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
-        var comment = await client.Comments.GetByIDAsync(id);
+        var client = new CustomWordpressClient(Creds);
+        var response = await client.Comments.GetByIDAsync(comment.CommentId);
 
-        return new(comment);
+        return new(response);
     }
 
     #endregion
@@ -41,14 +48,12 @@ public class CommentActions
     #region Create
 
     [Action("Add comment", Description = "Add comment")]
-    public async Task<WordPressComment> AddComment(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] AddComment request)
+    public async Task<WordPressComment> AddComment([ActionParameter] AddComment request)
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var client = new CustomWordpressClient(Creds);
         var comment = await client.Comments.CreateAsync(new()
         {
-            PostId = request.PostId,
+            PostId = IntParser.Parse(request.PostId, nameof(request.PostId))!.Value,
             Content = new(request.Content)
         });
 
@@ -60,12 +65,12 @@ public class CommentActions
     #region Delete
 
     [Action("Delete comment", Description = "Delete comment")]
-    public Task DeleteComment(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] [Display("Comment id")] int commentId)
+    public Task DeleteComment([ActionParameter] CommentRequest comment)
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
-        return client.Comments.DeleteAsync(commentId);
+        var client = new CustomWordpressClient(Creds);
+
+        var intCommentId = IntParser.Parse(comment.CommentId, nameof(comment.CommentId))!.Value;
+        return client.Comments.DeleteAsync(intCommentId);
     }
 
     #endregion

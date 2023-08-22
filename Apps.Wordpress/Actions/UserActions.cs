@@ -1,23 +1,31 @@
-﻿using Apps.Wordpress.Models.Requests;
+﻿using Apps.Wordpress.Api;
+using Apps.Wordpress.Models.Entities;
+using Apps.Wordpress.Models.Requests.User;
 using Apps.Wordpress.Models.Responses.All;
-using Apps.Wordpress.Models.Responses.Entities;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class UserActions
+public class UserActions : BaseInvocable
 {
+    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
+        InvocationContext.AuthenticationCredentialsProviders;
+
+    public UserActions(InvocationContext invocationContext) : base(invocationContext)
+    {
+    }
+
     #region Get
 
     [Action("Get all users", Description = "Get all users")]
-    public async Task<AllUsersResponse> GetAllUsers(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders)
+    public async Task<AllUsersResponse> GetAllUsers()
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
-        var users = await client.Users.GetAllAsync(true, true);
+        var client = new CustomWordpressClient(Creds);
+        var users = await client.Users.GetAllAsync(false, true);
 
         return new()
         {
@@ -25,15 +33,14 @@ public class UserActions
         };
     }
 
-    [Action("Get user", Description = "Get user by id")]
+    [Action("Get user", Description = "Get user by ID")]
     public async Task<WordPressUser> GetUserById(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
-        [ActionParameter] [Display("User id")] int id)
+        [ActionParameter] UserRequest user)
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
-        var user = await client.Users.GetByIDAsync(id, true, true);
+        var client = new CustomWordpressClient(Creds);
+        var response = await client.Users.GetByIDAsync(user.UserId, true, true);
 
-        return new(user);
+        return new(response);
     }
 
     #endregion
@@ -42,10 +49,10 @@ public class UserActions
 
     [Action("Add user", Description = "Add user")]
     public async Task<WordPressUser> AddUser(
-        IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders,
+        IEnumerable<AuthenticationCredentialsProvider> Creds,
         [ActionParameter] AddUser request)
     {
-        var client = new CustomWordpressClient(authenticationCredentialsProviders);
+        var client = new CustomWordpressClient(Creds);
         var user = await client.Users.CreateAsync(new()
         {
             Email = request.Email,

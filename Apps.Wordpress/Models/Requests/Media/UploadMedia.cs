@@ -1,6 +1,6 @@
 ﻿using Blackbird.Applications.Sdk.Common;
 
-namespace Apps.Wordpress.Models.Requests;
+namespace Apps.Wordpress.Models.Requests.Media;
 
 public class UploadMedia
 {

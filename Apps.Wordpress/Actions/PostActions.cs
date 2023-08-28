@@ -76,7 +76,7 @@ public class PostActions : BaseInvocable
         
         return new(new(Encoding.UTF8.GetBytes(html))
         {
-            Name = post.Title.Rendered,
+            Name = $"{post.Title.Rendered}.html",
             ContentType = MediaTypeNames.Text.Html
         });
     }

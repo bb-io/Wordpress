@@ -76,7 +76,7 @@ public class PageActions : BaseInvocable
 
         return new(new(Encoding.UTF8.GetBytes(html))
         {
-            Name = page.Title.Rendered,
+            Name = $"{page.Title.Rendered}.html",
             ContentType = MediaTypeNames.Text.Html
         });
     }

@@ -1,6 +1,8 @@
-﻿namespace Apps.Wordpress.Models.Requests;
+﻿using File = Blackbird.Applications.Sdk.Common.Files.File;
+
+namespace Apps.Wordpress.Models.Requests;
 
 public class UpdateFromFileRequest
 {
-    public byte[] File { get; set; }
+    public File File { get; set; }
 }

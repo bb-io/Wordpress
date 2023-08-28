@@ -51,7 +51,7 @@ public class MediaActions : BaseInvocable
     public async Task<WordPressMedia> UploadMedia([ActionParameter] UploadMedia request)
     {
         var client = new CustomWordpressClient(Creds);
-        var media = await client.Media.CreateAsync(new MemoryStream(request.FileContent), request.FileName);
+        var media = await client.Media.CreateAsync(new MemoryStream(request.File.Bytes), request.FileName ?? request.File.Name);
 
         return new(media);
     }

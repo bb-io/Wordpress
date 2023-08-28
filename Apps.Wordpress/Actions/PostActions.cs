@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Net.Mime;
+using System.Text;
 using Apps.Wordpress.Api;
 using Apps.Wordpress.Api.RestSharp;
 using Apps.Wordpress.Constants;
@@ -73,7 +74,11 @@ public class PostActions : BaseInvocable
 
         var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
         
-        return new(Encoding.UTF8.GetBytes(html));
+        return new(new(Encoding.UTF8.GetBytes(html))
+        {
+            Name = post.Title.Rendered,
+            ContentType = MediaTypeNames.Text.Html
+        });
     }
 
     #endregion
@@ -98,7 +103,7 @@ public class PostActions : BaseInvocable
     {
         var client = new CustomWordpressClient(Creds);
         
-        var html = Encoding.UTF8.GetString(request.File);
+        var html = Encoding.UTF8.GetString(request.File.Bytes);
         var htmlDocument = html.AsHtmlDocument();
         
         var post = await client.Posts.CreateAsync(new()
@@ -137,7 +142,7 @@ public class PostActions : BaseInvocable
     {
         var client = new CustomWordpressClient(Creds);
         
-        var html = Encoding.UTF8.GetString(request.File);
+        var html = Encoding.UTF8.GetString(request.File.Bytes);
         var htmlDocument = html.AsHtmlDocument();
 
         var response = await client.Posts.UpdateAsync(new()

@@ -1,24 +1,20 @@
-<Project Sdk="Microsoft.NET.Sdk">
-
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Wordpress</Product>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <Description>The world’s most popular website builder</Description>
     <AssemblyName>Apps.Wordpress</AssemblyName>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.2.0-alpha4" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.12" />
     <PackageReference Include="Blackbird.Applications.Sdk.Utils.Html" Version="1.0.1" />
     <PackageReference Include="WordPressPCL" Version="2.0.1" />
   </ItemGroup>
-
   <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png"></EmbeddedResource>
   </ItemGroup>
-  
 </Project>

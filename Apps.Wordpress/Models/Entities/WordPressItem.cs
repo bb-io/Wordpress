@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Wordpress.Models.Dtos;
+using Blackbird.Applications.Sdk.Common;
 using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Models.Entities;
@@ -7,10 +8,13 @@ public class WordPressItem
 {
     #region Properties
 
-    public int Id { get; }
+    [Display("ID")]
+    public string Id { get; }
     public string Title { get; }
 
     [Display("Html content")] public string HtmlContent { get; }
+
+    [Display("Html excerpt")] public string HtmlExcerpt { get; }
 
     public string Link { get; }
     
@@ -20,28 +24,23 @@ public class WordPressItem
     [Display("Modified at")]
     public DateTime ModifiedAt { get; }
 
+    [Display("Language (P)")]
+    public string Language { get; set; }
+
     #endregion
 
     #region Constructors
 
-    public WordPressItem(Post post)
+    public WordPressItem(BaseDto post)
     {
-        Id = post.Id;
+        Id = post.Id.ToString();
         Title = post.Title.Rendered;
         HtmlContent = post.Content.Rendered;
         Link = post.Link;
         CreatedAt = post.DateGmt;
         ModifiedAt = post.ModifiedGmt;
-    }
-    
-    public WordPressItem(Page page)
-    {
-        Id = page.Id;
-        Title = page.Title.Rendered;
-        HtmlContent = page.Content.Rendered;
-        Link = page.Link;
-        CreatedAt = page.DateGmt;
-        ModifiedAt = page.ModifiedGmt;
+        HtmlExcerpt = post.Excerpt.Rendered;
+        Language = post.Lang ?? "not available";
     }
 
     #endregion

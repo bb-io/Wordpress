@@ -8,6 +8,6 @@ namespace Apps.Wordpress.Models.Requests.Post
     {
         [Display("Post")] 
         [DataSource(typeof(PostDataHandler))]
-        public string PostId { get; set; }
+        public string Id { get; set; }
     }
 }

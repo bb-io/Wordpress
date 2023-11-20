@@ -21,27 +21,29 @@ public class CommentActions : BaseInvocable
     }
 
     #region Get
+    
+    // TODO: Make this more usable and related to posts/pages
 
-    [Action("Get all comments", Description = "Get all comments")]
-    public async Task<AllCommentsResponse> GetAllComments()
-    {
-        var client = new CustomWordpressClient(Creds);
-        var comments = await client.Comments.GetAllAsync(false, true);
+    //[Action("Get all comments", Description = "Get all comments")]
+    //public async Task<AllCommentsResponse> GetAllComments()
+    //{
+    //    var client = new CustomWordpressClient(Creds);
+    //    var comments = await client.Comments.GetAllAsync(false, true);
 
-        return new()
-        {
-            Comments = comments.Select(x => new WordPressComment(x)).ToList()
-        };
-    }
+    //    return new()
+    //    {
+    //        Comments = comments.Select(x => new WordPressComment(x)).ToList()
+    //    };
+    //}
 
-    [Action("Get comment", Description = "Get comment by ID")]
-    public async Task<WordPressComment> GetCommentById([ActionParameter] CommentRequest comment)
-    {
-        var client = new CustomWordpressClient(Creds);
-        var response = await client.Comments.GetByIDAsync(comment.CommentId);
+    //[Action("Get comment", Description = "Get comment by ID")]
+    //public async Task<WordPressComment> GetCommentById([ActionParameter] CommentRequest comment)
+    //{
+    //    var client = new CustomWordpressClient(Creds);
+    //    var response = await client.Comments.GetByIDAsync(comment.CommentId);
 
-        return new(response);
-    }
+    //    return new(response);
+    //}
 
     #endregion
 

@@ -1,4 +1,9 @@
-﻿using Apps.Wordpress.Extensions;
+﻿using Apps.Wordpress.Constants;
+using Apps.Wordpress.Extensions;
+using Apps.Wordpress.Models.Dtos;
+using Apps.Wordpress.Models.Entities;
+using Apps.Wordpress.Models.Requests.Post;
+using Apps.Wordpress.Models.Requests;
 using Apps.Wordpress.Models.Responses;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
@@ -10,7 +15,11 @@ namespace Apps.Wordpress.Api.RestSharp;
 
 public class WordpressRestClient : RestClient
 {
-    public WordpressRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) : base(GetOptions(creds))
+    public WordpressRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) : base(GetOptions(creds, "wp/v2/"))
+    {
+    }
+
+    public WordpressRestClient(IEnumerable<AuthenticationCredentialsProvider> creds, string baseResource) : base(GetOptions(creds, baseResource))
     {
     }
 
@@ -31,6 +40,7 @@ public class WordpressRestClient : RestClient
 
             var response = await ExecuteWithHandling(request);
             totalPages ??= int.Parse(response.Headers.First(x => x.Name == "X-Wp-Totalpages").Value.ToString());
+            var content = response.Content;
 
             var data = JsonConvert.DeserializeObject<T[]>(response.Content);
             result.AddRange(data);
@@ -57,9 +67,9 @@ public class WordpressRestClient : RestClient
     }
 
 
-    private static RestClientOptions GetOptions(IEnumerable<AuthenticationCredentialsProvider> creds)
+    private static RestClientOptions GetOptions(IEnumerable<AuthenticationCredentialsProvider> creds, string baseResource)
     {
-        var url = creds.GetUrl().Append("wp/v2/");
+        var url = creds.GetUrl().Append(baseResource);
 
         return new()
         {

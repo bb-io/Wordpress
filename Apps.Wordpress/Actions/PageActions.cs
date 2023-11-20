@@ -5,9 +5,12 @@ using Apps.Wordpress.Api;
 using Apps.Wordpress.Api.RestSharp;
 using Apps.Wordpress.Constants;
 using Apps.Wordpress.Extensions;
+using Apps.Wordpress.Models.Dtos;
 using Apps.Wordpress.Models.Entities;
+using Apps.Wordpress.Models.Polylang;
 using Apps.Wordpress.Models.Requests;
 using Apps.Wordpress.Models.Requests.Page;
+using Apps.Wordpress.Models.Requests.Post;
 using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
@@ -26,6 +29,8 @@ namespace Apps.Wordpress.Actions;
 [ActionList]
 public class PageActions : BaseInvocable
 {
+    private const string Endpoint = "pages";
+
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
 
@@ -35,7 +40,7 @@ public class PageActions : BaseInvocable
 
     #region Get
 
-    [Action("Get all pages", Description = "Get all pages content")]
+    [Action("Search pages", Description = "Search pages given created or updated times. Optionally use the language input to filter by language (with Polylang)")]
     public async Task<AllPagesResponse> GetAllPages([ActionParameter] ListArticlesRequest input)
     {
         var client = new WordpressRestClient(Creds);
@@ -45,11 +50,15 @@ public class PageActions : BaseInvocable
             { "after", input.CreatedInLastHours.GetPastHoursDate()},
             { "modified_after", input.UpdatedInLastHours.GetPastHoursDate()},
         }.AllIsNotNull();
-        
-        var endpoint = ApiEndpoints.Pages.WithQuery(query);
+
+        if (input.Language != null)
+            query["lang"] = input.Language;
+
+        var endpoint = Endpoint.WithQuery(query);
         var request = new WordpressRestRequest(endpoint, Method.Get, Creds);
 
-        var items = await client.Paginate<Page>(request);
+        var items = await client.Paginate<BaseDto>(request);
+
         return new()
         {
             Pages = items.Select(p => new WordPressItem(p)).ToList()
@@ -57,20 +66,51 @@ public class PageActions : BaseInvocable
     }
 
     [Action("Get page", Description = "Get page by ID")]
-    public async Task<WordPressItem> GetPageById(
-        [ActionParameter] PageRequest input)
+    public async Task<WordPressItem> GetPageById([ActionParameter] PageRequest input)
     {
-        var client = new CustomWordpressClient(Creds);
-        var page = await client.Pages.GetByIDAsync(input.PageId);
+        var client = new WordpressRestClient(Creds);
+        var request = new WordpressRestRequest(Endpoint + $"/{input.Id}", Method.Get, Creds);
+        var post = await client.ExecuteWithHandling<BaseDto>(request);
 
-        return new(page);
+        return new(post);
+    }
+
+    [Action("Get page missing translations (P)", Description = "Gets all the languages that are missing for this page.")]
+    public async Task<MissingTranslations> GetPageMissingTranslations([ActionParameter] PageRequest input)
+    {
+        var client = new WordpressRestClient(Creds);
+        var request = new WordpressRestRequest(Endpoint + $"/{input.Id}", Method.Get, Creds);
+        var post = await client.ExecuteWithHandling<BaseDto>(request);
+
+        var polylang = new PolylangActions(InvocationContext);
+        var allLanguagesResponse = await polylang.GetLanguages();
+        var allLanguages = allLanguagesResponse.Languages.Select(x => x.Slug);
+        var translatedLanguages = new List<string>(post.Translations.Keys);
+
+        var missingLanguages = allLanguages.Where(x => translatedLanguages.All(y => y != x))!;
+
+        return new MissingTranslations { MissingLanguages = missingLanguages };
+    }
+
+    [Action("Get page translation (P)", Description = "Get the translation of a page. Polylang required.")]
+    public async Task<WordPressItem> GetTranslationByPage([ActionParameter] PageRequest input, [ActionParameter] LanguageRequest lang)
+    {
+        var client = new WordpressRestClient(Creds);
+        var request = new WordpressRestRequest(Endpoint + $"/{input.Id}", Method.Get, Creds);
+        var post = await client.ExecuteWithHandling<BaseDto>(request);
+
+        if (!post.Translations.ContainsKey(lang.Language))
+            throw new Exception("This page does not have a translation in " + lang.Language);
+
+        var translationId = post.Translations[lang.Language];
+        return await GetPageById(new PageRequest { Id = translationId.ToString() });
     }
 
     [Action("Get page as HTML", Description = "Get page by id as HTML file")]
     public async Task<FileResponse> GetPageByIdAsHtml([ActionParameter] PageRequest input)
     {
         var client = new CustomWordpressClient(Creds);
-        var page = await client.Pages.GetByIDAsync(input.PageId);
+        var page = await client.Pages.GetByIDAsync(input.Id);
 
         var html = (page.Title.Rendered, page.Content.Rendered).AsHtml();
 
@@ -83,76 +123,72 @@ public class PageActions : BaseInvocable
 
     #endregion
 
-    #region Create
+    #region Post & Update
 
-    [Action("Create page", Description = "Create page")]
-    public async Task<WordPressItem> CreatePage([ActionParameter] CreateRequest request)
+    [Action("Create page", Description = "Create a new page. With Polylang enabled it can also be used to create translations of other pages.")]
+    public Task<WordPressItem> CreatePage([ActionParameter] ModificationRequest input, [ActionParameter] TranslationOptions translationOptions)
     {
-        var client = new CustomWordpressClient(Creds);
-        var page = await client.Pages.CreateAsync(new()
-        {
-            Title = new(request.Title),
-            Content = new(request.Content)
-        });
-
-        return new(page);
+        return ExecuteModification(input, translationOptions, null);
     }
 
-    [Action("Create page from HTML", Description = "Create page from HTML file")]
-    public async Task<WordPressItem> CreatePageFromHtml([ActionParameter] CreateFromFileRequest request)
+    [Action("Create page from HTML", Description = "Create a new page from an HTML file. With Polylang enabled it can also be used to create translations of other pages.")]
+    public Task<WordPressItem> CreatePageFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] TranslationOptions translationOptions)
     {
-        var client = new CustomWordpressClient(Creds);
-
-        var html = Encoding.UTF8.GetString(request.File.Bytes);
-        var htmlDocument = html.AsHtmlDocument();
-
-        var page = await client.Pages.CreateAsync(new()
-        {
-            Title = new(htmlDocument.GetTitle()),
-            Content = new(htmlDocument.GetBody())
-        });
-
-        return new(page);
+        return ExecuteModification(input, translationOptions, null);
     }
 
-    #endregion
-
-    #region Update
-
-    [Action("Update page", Description = "Update page")]
-    public async Task<WordPressItem> UpdatePage(
+    [Action("Update page", Description = "Update page. With Polylang enabled it can also be used to set the language and update its associations.")]
+    public Task<WordPressItem> UpdatePage(
         [ActionParameter] PageRequest page,
-        [ActionParameter] UpdateRequest request)
+        [ActionParameter] ModificationRequest input,
+        [ActionParameter] TranslationOptions translationOptions
+        )
     {
-        var client = new CustomWordpressClient(Creds);
-        var response = await client.Pages.UpdateAsync(new()
-        {
-            Id = IntParser.Parse(page.PageId, nameof(page.PageId))!.Value,
-            Title = new(request.Title),
-            Content = new(request.Content)
-        });
-
-        return new(response);
+        return ExecuteModification(input, translationOptions, page.Id);
     }
 
-    [Action("Update page from HTML", Description = "Update page from HTML file")]
-    public async Task<WordPressItem> UpdatePageFromHtml(
+    [Action("Update page from HTML", Description = "Update a page from an HTML file. With Polylang enabled it can also be used to set the language and update its associations.")]
+    public Task<WordPressItem> UpdatePageFromHtml(
         [ActionParameter] PageRequest page,
-        [ActionParameter] UpdateFromFileRequest request)
+        [ActionParameter] FileModificationRequest input,
+        [ActionParameter] TranslationOptions translationOptions
+        )
     {
-        var client = new CustomWordpressClient(Creds);
+        return ExecuteModification(input, translationOptions, page.Id);
+    }
 
-        var html = Encoding.UTF8.GetString(request.File.Bytes);
+    private Task<WordPressItem> ExecuteModification(FileModificationRequest input, TranslationOptions translationOptions, string? id)
+    {
+        var html = Encoding.UTF8.GetString(input.File.Bytes);
         var htmlDocument = html.AsHtmlDocument();
+        var title = htmlDocument.GetTitle();
+        var body = htmlDocument.GetBody();
+        return ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
+    }
 
-        var response = await client.Pages.UpdateAsync(new()
+    private async Task<WordPressItem> ExecuteModification(ModificationRequest input, TranslationOptions translationOptions, string? id)
+    {
+        var client = new WordpressRestClient(Creds);
+        var request = new WordpressRestRequest(Endpoint + (id == null ? "" : $"/{id}"), Method.Post, Creds);
+
+        request.AddJsonBody(new
         {
-            Id = IntParser.Parse(page.PageId, nameof(page.PageId))!.Value,
-            Title = new(htmlDocument.GetTitle()),
-            Content = new(htmlDocument.GetBody())
+            title = input.Title,
+            content = input.Content
         });
 
-        return new(response);
+        if (translationOptions.Language != null)
+            request.AddQueryParameter("lang", translationOptions.Language);
+
+        if (translationOptions.ParentId != null)
+        {
+            var parent = await GetPageById(new PageRequest { Id = translationOptions.ParentId });
+            request.AddQueryParameter($"translations[{parent.Language}]", translationOptions.ParentId);
+        }
+
+        var result = await client.ExecuteWithHandling<BaseDto>(request);
+
+        return new(result);
     }
 
     #endregion
@@ -164,7 +200,7 @@ public class PageActions : BaseInvocable
     {
         var client = new CustomWordpressClient(Creds);
 
-        var intPageId = IntParser.Parse(page.PageId, nameof(page.PageId))!.Value;
+        var intPageId = IntParser.Parse(page.Id, nameof(page.Id))!.Value;
         return client.Pages.DeleteAsync(intPageId);
     }
 

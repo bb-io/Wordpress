@@ -16,7 +16,7 @@ namespace Apps.Wordpress.Connections
                 {
                     new("url") { DisplayName = "URL" },
                     new("login") { DisplayName = "Login" },
-                    new("applicationPassword") { DisplayName = "Application password" }
+                    new("applicationPassword") { DisplayName = "Application password", Sensitive = true }
                 }
             }
         };

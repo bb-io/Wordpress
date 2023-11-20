@@ -3,8 +3,8 @@
     <TargetFramework>net7.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Product>Wordpress</Product>
-    <Version>1.0.2</Version>
+    <Product>Wordpress (+ Polylang)</Product>
+    <Version>1.1.0</Version>
     <Description>The world’s most popular website builder</Description>
     <AssemblyName>Apps.Wordpress</AssemblyName>
   </PropertyGroup>

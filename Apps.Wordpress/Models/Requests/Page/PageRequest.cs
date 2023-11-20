@@ -8,6 +8,6 @@ namespace Apps.Wordpress.Models.Requests.Page
     {
         [Display("Page")] 
         [DataSource(typeof(PageDataHandler))]
-        public string PageId { get; set; }
+        public string Id { get; set; }
     }
 }

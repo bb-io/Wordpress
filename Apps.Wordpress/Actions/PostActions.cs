@@ -1,9 +1,7 @@
-﻿using System.Net;
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using System.Text;
 using Apps.Wordpress.Api;
 using Apps.Wordpress.Api.RestSharp;
-using Apps.Wordpress.Constants;
 using Apps.Wordpress.Extensions;
 using Apps.Wordpress.Models.Dtos;
 using Apps.Wordpress.Models.Entities;
@@ -17,12 +15,13 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using RestSharp;
-using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
@@ -30,11 +29,16 @@ namespace Apps.Wordpress.Actions;
 public class PostActions : BaseInvocable
 {
     private const string Endpoint = "posts";
+    
+    private readonly IFileManagementClient _fileManagementClient;
+    
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
     
-    public PostActions(InvocationContext invocationContext) : base(invocationContext)
+    public PostActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+        : base(invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
     
     #region Get
@@ -112,12 +116,11 @@ public class PostActions : BaseInvocable
         var post = await client.Posts.GetByIDAsync(input.Id);
 
         var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
-        
-        return new(new(Encoding.UTF8.GetBytes(html))
-        {
-            Name = $"{post.Title.Rendered}.html",
-            ContentType = MediaTypeNames.Text.Html
-        });
+
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
+        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,
+            $"{post.Title.Rendered}.html");
+        return new(file);
     }
 
     #endregion
@@ -156,13 +159,15 @@ public class PostActions : BaseInvocable
         return ExecuteModification(input, translationOptions, post.Id);
     }    
 
-    private Task<WordPressItem> ExecuteModification(FileModificationRequest input, TranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, TranslationOptions translationOptions, string? id)
     {
-        var html = Encoding.UTF8.GetString(input.File.Bytes);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var fileBytes = await fileStream.GetByteData();
+        var html = Encoding.UTF8.GetString(fileBytes);
         var htmlDocument = html.AsHtmlDocument();
         var title = htmlDocument.GetTitle();
         var body = htmlDocument.GetBody();
-        return ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
+        return await ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
     }
 
     private async Task<WordPressItem> ExecuteModification(ModificationRequest input, TranslationOptions translationOptions, string? id)

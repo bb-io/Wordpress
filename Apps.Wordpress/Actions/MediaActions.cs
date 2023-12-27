@@ -6,6 +6,8 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 
 namespace Apps.Wordpress.Actions;
@@ -13,11 +15,15 @@ namespace Apps.Wordpress.Actions;
 [ActionList]
 public class MediaActions : BaseInvocable
 {
+    private readonly IFileManagementClient _fileManagementClient;
+    
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
     
-    public MediaActions(InvocationContext invocationContext) : base(invocationContext)
+    public MediaActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+        : base(invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
     
     #region Get
@@ -51,8 +57,9 @@ public class MediaActions : BaseInvocable
     public async Task<WordPressMedia> UploadMedia([ActionParameter] UploadMedia request)
     {
         var client = new CustomWordpressClient(Creds);
-        var media = await client.Media.CreateAsync(new MemoryStream(request.File.Bytes), request.FileName ?? request.File.Name);
-
+        var fileStream = await _fileManagementClient.DownloadAsync(request.File);
+        var fileBytes = await fileStream.GetByteData();
+        var media = await client.Media.CreateAsync(new MemoryStream(fileBytes), request.FileName ?? request.File.Name);
         return new(media);
     }
 
@@ -70,6 +77,4 @@ public class MediaActions : BaseInvocable
     }
 
     #endregion
-
-
 }

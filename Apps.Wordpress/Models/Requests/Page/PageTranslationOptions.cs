@@ -7,16 +7,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Apps.Wordpress.Models.Requests.Post
+namespace Apps.Wordpress.Models.Requests.Page
 {
-    public class TranslationOptions
+    public class PageTranslationOptions
     {
         [Display("Language (P)")]
         [DataSource(typeof(LanguageDataHandler))]
         public string? Language { get; set; }
 
         [Display("As translation of (P)")]
-        [DataSource(typeof(PostDataHandler))]
+        [DataSource(typeof(PageDataHandler))]
         public string? ParentId { get; set; }
     }
 }

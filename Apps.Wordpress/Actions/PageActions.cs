@@ -130,13 +130,13 @@ public class PageActions : BaseInvocable
     #region Post & Update
 
     [Action("Create page", Description = "Create a new page. With Polylang enabled it can also be used to create translations of other pages.")]
-    public Task<WordPressItem> CreatePage([ActionParameter] ModificationRequest input, [ActionParameter] TranslationOptions translationOptions)
+    public Task<WordPressItem> CreatePage([ActionParameter] ModificationRequest input, [ActionParameter] PageTranslationOptions translationOptions)
     {
         return ExecuteModification(input, translationOptions, null);
     }
 
     [Action("Create page from HTML", Description = "Create a new page from an HTML file. With Polylang enabled it can also be used to create translations of other pages.")]
-    public Task<WordPressItem> CreatePageFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] TranslationOptions translationOptions)
+    public Task<WordPressItem> CreatePageFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PageTranslationOptions translationOptions)
     {
         return ExecuteModification(input, translationOptions, null);
     }
@@ -145,7 +145,7 @@ public class PageActions : BaseInvocable
     public Task<WordPressItem> UpdatePage(
         [ActionParameter] PageRequest page,
         [ActionParameter] ModificationRequest input,
-        [ActionParameter] TranslationOptions translationOptions
+        [ActionParameter] PageTranslationOptions translationOptions
         )
     {
         return ExecuteModification(input, translationOptions, page.Id);
@@ -155,13 +155,13 @@ public class PageActions : BaseInvocable
     public Task<WordPressItem> UpdatePageFromHtml(
         [ActionParameter] PageRequest page,
         [ActionParameter] FileModificationRequest input,
-        [ActionParameter] TranslationOptions translationOptions
+        [ActionParameter] PageTranslationOptions translationOptions
         )
     {
         return ExecuteModification(input, translationOptions, page.Id);
     }
 
-    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, TranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, PageTranslationOptions translationOptions, string? id)
     {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();
@@ -172,7 +172,7 @@ public class PageActions : BaseInvocable
         return await ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
     }
 
-    private async Task<WordPressItem> ExecuteModification(ModificationRequest input, TranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(ModificationRequest input, PageTranslationOptions translationOptions, string? id)
     {
         var client = new WordpressRestClient(Creds);
         var request = new WordpressRestRequest(Endpoint + (id == null ? "" : $"/{id}"), Method.Post, Creds);

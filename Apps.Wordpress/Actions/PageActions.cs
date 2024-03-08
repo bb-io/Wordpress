@@ -17,12 +17,13 @@ using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using Blackbird.Applications.Sdk.Utils.Parsers;
 using RestSharp;
-using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
@@ -31,11 +32,15 @@ public class PageActions : BaseInvocable
 {
     private const string Endpoint = "pages";
 
+    private readonly IFileManagementClient _fileManagementClient;
+    
     private IEnumerable<AuthenticationCredentialsProvider> Creds =>
         InvocationContext.AuthenticationCredentialsProviders;
 
-    public PageActions(InvocationContext invocationContext) : base(invocationContext)
+    public PageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+        : base(invocationContext)
     {
+        _fileManagementClient = fileManagementClient;
     }
 
     #region Get
@@ -113,12 +118,11 @@ public class PageActions : BaseInvocable
         var page = await client.Pages.GetByIDAsync(input.Id);
 
         var html = (page.Title.Rendered, page.Content.Rendered).AsHtml();
-
-        return new(new(Encoding.UTF8.GetBytes(html))
-        {
-            Name = $"{page.Title.Rendered}.html",
-            ContentType = MediaTypeNames.Text.Html
-        });
+        
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
+        var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,
+            $"{page.Title.Rendered}.html");
+        return new(file);
     }
 
     #endregion
@@ -159,11 +163,13 @@ public class PageActions : BaseInvocable
 
     private Task<WordPressItem> ExecuteModification(FileModificationRequest input, PageTranslationOptions translationOptions, string? id)
     {
-        var html = Encoding.UTF8.GetString(input.File.Bytes);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var fileBytes = await fileStream.GetByteData();
+        var html = Encoding.UTF8.GetString(fileBytes);
         var htmlDocument = html.AsHtmlDocument();
         var title = htmlDocument.GetTitle();
         var body = htmlDocument.GetBody();
-        return ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
+        return await ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
     }
 
     private async Task<WordPressItem> ExecuteModification(ModificationRequest input, PageTranslationOptions translationOptions, string? id)

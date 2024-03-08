@@ -161,7 +161,7 @@ public class PageActions : BaseInvocable
         return ExecuteModification(input, translationOptions, page.Id);
     }
 
-    private Task<WordPressItem> ExecuteModification(FileModificationRequest input, PageTranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, PageTranslationOptions translationOptions, string? id)
     {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();

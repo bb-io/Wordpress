@@ -159,7 +159,7 @@ public class PostActions : BaseInvocable
         return ExecuteModification(input, translationOptions, post.Id);
     }    
 
-    private Task<WordPressItem> ExecuteModification(FileModificationRequest input, PostTranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, PostTranslationOptions translationOptions, string? id)
     {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();

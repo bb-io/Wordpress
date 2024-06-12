@@ -87,10 +87,10 @@ Let us know if you're interested!
 
 ## Events
 
-- **On post created** triggers when a new post is created.
-- **On post updated** triggers when any post is updated.
-- **On page created** triggers when a new page is created.
-- **On page updated** triggers when any page is updated.
+- **On posts created** triggers when new posts are created.
+- **On posts updated** triggers when any posts are updated.
+- **On pages created** triggers when new pages are created.
+- **On pages updated** triggers when any pages are updated.
 
 ## Feedback
 

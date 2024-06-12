@@ -5,11 +5,13 @@ using Apps.Wordpress.Events.Polling.Models;
 using Apps.Wordpress.Events.Polling.Models.Memory;
 using Apps.Wordpress.Models.Dtos;
 using Apps.Wordpress.Models.Entities;
+using Apps.Wordpress.Models.Requests;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
+using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using RestSharp;
 
 namespace Apps.Wordpress.Events.Polling;
@@ -21,51 +23,58 @@ public class PollingList : BaseInvocable
     {
     }
 
-    [PollingEvent("On post created", "On a new post created")]
+    [PollingEvent("On posts created", "On new posts are created")]
     public Task<PollingEventResponse<ContentCreatedPollingMemory, ContentPollingResult>> OnPostCreated(
-        PollingEventRequest<ContentCreatedPollingMemory> request)
+        PollingEventRequest<ContentCreatedPollingMemory> request,
+        [PollingEventParameter] LanguageOptionalRequest languageRequest)
         => PollContentCreation(request, new()
         {
-            ["after"] = request.Memory?.LastCreationDate.ToString(Formats.ISO8601) ?? string.Empty
+            ["after"] = request.Memory?.LastCreationDate.ToString(Formats.ISO8601) ?? string.Empty,
+            ["lang"] = languageRequest.Language ?? string.Empty
         }, "posts", () => new()
         {
             LastCreationDate = DateTime.UtcNow
         });
 
 
-    [PollingEvent("On post updated", "On a specific post updated")]
+    [PollingEvent("On posts updated", "On specific posts are updated")]
     public Task<PollingEventResponse<ContentUpdatedPollingMemory, ContentPollingResult>> OnPostUpdated(
         PollingEventRequest<ContentUpdatedPollingMemory> request,
         [PollingEventParameter] [Display("Post ID")] [DataSource(typeof(PostDataHandler))]
-        string? postId)
+        string? postId, [PollingEventParameter] LanguageOptionalRequest languageRequest)
         => PollContentChanges(request, postId, new()
         {
-            ["modified_after"] = request.Memory?.LastModificationTime.ToString(Formats.ISO8601) ?? string.Empty
+            ["modified_after"] = request.Memory?.LastModificationTime.ToString(Formats.ISO8601) ?? string.Empty,
+            ["lang"] = languageRequest.Language ?? string.Empty
         }, "posts", () => new()
         {
             LastModificationTime = DateTime.UtcNow
         });
 
-    [PollingEvent("On page created", "On a new page created")]
+    [PollingEvent("On pages created", "On new pages are created")]
     public Task<PollingEventResponse<ContentCreatedPollingMemory, ContentPollingResult>> OnPageCreated(
-        PollingEventRequest<ContentCreatedPollingMemory> request)
+        PollingEventRequest<ContentCreatedPollingMemory> request,
+        [PollingEventParameter] LanguageOptionalRequest languageRequest)
         => PollContentCreation(request, new()
         {
-            ["after"] = request.Memory?.LastCreationDate.ToString(Formats.ISO8601) ?? string.Empty
+            ["after"] = request.Memory?.LastCreationDate.ToString(Formats.ISO8601) ?? string.Empty,
+            ["lang"] = languageRequest.Language ?? string.Empty
         }, "pages", () => new()
         {
             LastCreationDate = DateTime.UtcNow
         });
 
 
-    [PollingEvent("On page updated", "On a specific page updated")]
+    [PollingEvent("On pages updated", "On specific pages are updated")]
     public Task<PollingEventResponse<ContentUpdatedPollingMemory, ContentPollingResult>> OnPageUpdated(
         PollingEventRequest<ContentUpdatedPollingMemory> request,
         [PollingEventParameter] [Display("Page ID")] [DataSource(typeof(PageDataHandler))]
-        string? pageId)
+        string? pageId,
+        [PollingEventParameter] LanguageOptionalRequest languageRequest)
         => PollContentChanges(request, pageId, new()
         {
-            ["modified_after"] = request.Memory?.LastModificationTime.ToString(Formats.ISO8601) ?? string.Empty
+            ["modified_after"] = request.Memory?.LastModificationTime.ToString(Formats.ISO8601) ?? string.Empty,
+            ["lang"] = languageRequest.Language ?? string.Empty
         }, "pages", () => new()
         {
             LastModificationTime = DateTime.UtcNow
@@ -83,7 +92,7 @@ public class PollingList : BaseInvocable
             };
         }
 
-        var items = await ListContentItems(endpoint.WithQuery(query));
+        var items = await ListContentItems(endpoint.WithQuery(query.AllIsNotNull()));
 
         if (!items.Any())
         {
@@ -119,7 +128,7 @@ public class PollingList : BaseInvocable
         }
 
         var items = string.IsNullOrWhiteSpace(resourceId)
-            ? await ListContentItems(endpoint.WithQuery(query))
+            ? await ListContentItems(endpoint.WithQuery(query.AllIsNotNull()))
             : await GetContentItem($"{endpoint}/{resourceId}", request.Memory);
 
         if (!items.Any())

@@ -6,7 +6,7 @@ namespace Apps.Wordpress.Models.Requests.Post
 {
     public class PostRequest
     {
-        [Display("Post")] 
+        [Display("Post ID")] 
         [DataSource(typeof(PostDataHandler))]
         public string Id { get; set; }
     }

@@ -85,6 +85,13 @@ Our post & page actions can also be extended to deal with more properties like s
 
 Let us know if you're interested!
 
+## Events
+
+- **On post created** triggers when a new post is created.
+- **On post updated** triggers when any post is updated.
+- **On page created** triggers when a new page is created.
+- **On page updated** triggers when any page is updated.
+
 ## Feedback
 
 Do you want to use this app or do you have feedback on our implementation? Reach out to us using the [established channels](https://www.blackbird.io/) or create an issue.

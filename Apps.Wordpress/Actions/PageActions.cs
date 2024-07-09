@@ -23,6 +23,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using Newtonsoft.Json;
 using RestSharp;
 
 namespace Apps.Wordpress.Actions;
@@ -75,9 +76,10 @@ public class PageActions : BaseInvocable
     {
         var client = new WordpressRestClient(Creds);
         var request = new WordpressRestRequest(Endpoint + $"/{input.Id}", Method.Get, Creds);
-        var post = await client.ExecuteWithHandling<BaseDto>(request);
+        var post = await client.ExecuteWithHandling(request);
 
-        return new(post);
+        var dto = JsonConvert.DeserializeObject<BaseDto>(post.Content!)!;
+        return new(dto);
     }
 
     [Action("Get page missing translations (P)", Description = "Gets all the languages that are missing for this page.")]
@@ -114,14 +116,15 @@ public class PageActions : BaseInvocable
     [Action("Get page as HTML", Description = "Get page by id as HTML file")]
     public async Task<FileResponse> GetPageByIdAsHtml([ActionParameter] PageRequest input)
     {
-        var client = new CustomWordpressClient(Creds);
-        var page = await client.Pages.GetByIDAsync(input.Id);
-
-        var html = (page.Title.Rendered, page.Content.Rendered).AsHtml();
+        var client = new WordpressRestClient(Creds);
+        var request = new WordpressRestRequest(Endpoint + $"/{input.Id}", Method.Get, Creds);
+        var post = await client.ExecuteWithHandling<BaseDto>(request);
+        
+        var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
         
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,
-            $"{page.Title.Rendered}.html");
+            $"{post.Title.Rendered}.html");
         return new(file);
     }
 

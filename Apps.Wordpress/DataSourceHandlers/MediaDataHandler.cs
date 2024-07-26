@@ -1,26 +1,24 @@
 ﻿using Apps.Wordpress.Api;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Authentication;
+using Apps.Wordpress.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.DataSourceHandlers;
 
-public class MediaDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class MediaDataHandler : WordpressInvocable, IAsyncDataSourceHandler
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-    
     public MediaDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
     }
 
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        var client = new CustomWordpressClient(Creds);
-        var items = await client.Media.GetAllAsync(false, true);
+        var request = new WordpressRestRequest("media", Method.Get, Creds);
+        var medias = await Client.Paginate<MediaItem>(request);
 
-        return items
+        return medias
             .Where(x => context.SearchString == null ||
                         x.Title.Rendered.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.Date)

@@ -1,4 +1,4 @@
-using Apps.Wordpress.Api.RestSharp;
+using Apps.Wordpress.Api;
 using Apps.Wordpress.Constants;
 using Apps.Wordpress.DataSourceHandlers;
 using Apps.Wordpress.Events.Polling.Models;

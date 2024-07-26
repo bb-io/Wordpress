@@ -3,7 +3,7 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using RestSharp;
 
-namespace Apps.Wordpress.Api.RestSharp;
+namespace Apps.Wordpress.Api;
 
 public class WordpressRestRequest : RestRequest
 {

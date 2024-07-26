@@ -2,12 +2,11 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Wordpress.Models.Requests.Post
+namespace Apps.Wordpress.Models.Requests.Post;
+
+public class PostRequest
 {
-    public class PostRequest
-    {
-        [Display("Post ID")] 
-        [DataSource(typeof(PostDataHandler))]
-        public string Id { get; set; }
-    }
+    [Display("Post ID")] 
+    [DataSource(typeof(PostDataHandler))]
+    public string Id { get; set; }
 }

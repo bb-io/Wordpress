@@ -1,21 +1,21 @@
 ﻿using Apps.Wordpress.Api;
+using Apps.Wordpress.Constants;
+using Apps.Wordpress.Invocables;
 using Apps.Wordpress.Models.Entities;
 using Apps.Wordpress.Models.Requests.Comment;
-using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.Parsers;
+using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class CommentActions : BaseInvocable
+public class CommentActions : WordpressInvocable
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-
     public CommentActions(InvocationContext invocationContext) : base(invocationContext)
     {
     }
@@ -50,14 +50,15 @@ public class CommentActions : BaseInvocable
     #region Create
 
     [Action("Add comment", Description = "Add comment")]
-    public async Task<WordPressComment> AddComment([ActionParameter] AddComment request)
+    public async Task<WordPressComment> AddComment([ActionParameter] AddComment input)
     {
-        var client = new CustomWordpressClient(Creds);
-        var comment = await client.Comments.CreateAsync(new()
-        {
-            PostId = IntParser.Parse(request.PostId, nameof(request.PostId))!.Value,
-            Content = new(request.Content)
-        });
+        var request = new WordpressRestRequest("comments", Method.Post, Creds)
+            .WithJsonBody(new
+            {
+                Post = IntParser.Parse(input.PostId, nameof(input.PostId))!.Value,
+                input.Content
+            }, JsonConfig.JsonSettings);
+        var comment = await Client.ExecuteWithHandling<Comment>(request);
 
         return new(comment);
     }
@@ -69,10 +70,8 @@ public class CommentActions : BaseInvocable
     [Action("Delete comment", Description = "Delete comment")]
     public Task DeleteComment([ActionParameter] CommentRequest comment)
     {
-        var client = new CustomWordpressClient(Creds);
-
-        var intCommentId = IntParser.Parse(comment.CommentId, nameof(comment.CommentId))!.Value;
-        return client.Comments.DeleteAsync(intCommentId);
+        var request = new WordpressRestRequest($"comments/{comment.CommentId}", Method.Delete, Creds);
+        return Client.ExecuteWithHandling<Comment>(request);
     }
 
     #endregion

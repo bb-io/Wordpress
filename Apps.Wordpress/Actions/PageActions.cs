@@ -1,43 +1,35 @@
-﻿using System.Globalization;
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using System.Text;
 using Apps.Wordpress.Api;
-using Apps.Wordpress.Api.RestSharp;
-using Apps.Wordpress.Constants;
 using Apps.Wordpress.Extensions;
+using Apps.Wordpress.Invocables;
 using Apps.Wordpress.Models.Dtos;
 using Apps.Wordpress.Models.Entities;
 using Apps.Wordpress.Models.Polylang;
 using Apps.Wordpress.Models.Requests;
 using Apps.Wordpress.Models.Requests.Page;
-using Apps.Wordpress.Models.Requests.Post;
 using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
-using Blackbird.Applications.Sdk.Utils.Parsers;
 using Newtonsoft.Json;
 using RestSharp;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class PageActions : BaseInvocable
+public class PageActions : WordpressInvocable
 {
     private const string Endpoint = "pages";
 
     private readonly IFileManagementClient _fileManagementClient;
     
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-
     public PageActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
         : base(invocationContext)
     {
@@ -207,10 +199,8 @@ public class PageActions : BaseInvocable
     [Action("Delete page", Description = "Delete page")]
     public Task DeletePage([ActionParameter] PageRequest page)
     {
-        var client = new CustomWordpressClient(Creds);
-
-        var intPageId = IntParser.Parse(page.Id, nameof(page.Id))!.Value;
-        return client.Pages.DeleteAsync(intPageId);
+        var request = new WordpressRestRequest($"pages/{page.Id}", Method.Delete, Creds);
+        return Client.ExecuteWithHandling(request);
     }
 
     #endregion

@@ -2,12 +2,11 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 
-namespace Apps.Wordpress.Models.Requests.Page
+namespace Apps.Wordpress.Models.Requests.Page;
+
+public class PageRequest
 {
-    public class PageRequest
-    {
-        [Display("Page")] 
-        [DataSource(typeof(PageDataHandler))]
-        public string Id { get; set; }
-    }
+    [Display("Page")] 
+    [DataSource(typeof(PageDataHandler))]
+    public string Id { get; set; }
 }

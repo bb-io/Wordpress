@@ -22,6 +22,8 @@ public class PolylangActions : WordpressInvocable
         return new()
         {
             Languages = result,
+            DefaultLanguageCode = result.FirstOrDefault(x => x.IsDefault)?.Locale,
+            OtherLanguageCodes = result.Select(x => x.Locale),
         };
     }
 }

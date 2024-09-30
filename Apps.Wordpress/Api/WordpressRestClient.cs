@@ -1,9 +1,5 @@
 ﻿using Apps.Wordpress.Constants;
 using Apps.Wordpress.Extensions;
-using Apps.Wordpress.Models.Dtos;
-using Apps.Wordpress.Models.Entities;
-using Apps.Wordpress.Models.Requests.Post;
-using Apps.Wordpress.Models.Requests;
 using Apps.Wordpress.Models.Responses;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
@@ -11,7 +7,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Newtonsoft.Json;
 using RestSharp;
 
-namespace Apps.Wordpress.Api.RestSharp;
+namespace Apps.Wordpress.Api;
 
 public class WordpressRestClient : RestClient
 {
@@ -52,7 +48,7 @@ public class WordpressRestClient : RestClient
     public async Task<T> ExecuteWithHandling<T>(RestRequest request)
     {
         var response = await ExecuteWithHandling(request);
-        return JsonConvert.DeserializeObject<T>(response.Content);
+        return JsonConvert.DeserializeObject<T>(response.Content, JsonConfig.JsonSettings);
     }    
     
     public async Task<RestResponse> ExecuteWithHandling(RestRequest request)

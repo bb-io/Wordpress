@@ -1,16 +1,14 @@
 ﻿using Apps.Wordpress.Api;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Authentication;
+using Apps.Wordpress.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.DataSourceHandlers;
 
-public class PageDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class PageDataHandler : WordpressInvocable, IAsyncDataSourceHandler
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-
     public PageDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
     }
@@ -18,10 +16,10 @@ public class PageDataHandler : BaseInvocable, IAsyncDataSourceHandler
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context,
         CancellationToken cancellationToken)
     {
-        var client = new CustomWordpressClient(Creds);
-        var comments = await client.Pages.GetAllAsync(false, true);
+        var request = new WordpressRestRequest("pages", Method.Get, Creds);
+        var pages = await Client.Paginate<Page>(request);
 
-        return comments
+        return pages
             .Where(x => context.SearchString == null ||
                         x.Title.Rendered.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(x => x.Date)

@@ -1,20 +1,21 @@
 ﻿using Apps.Wordpress.Api;
+using Apps.Wordpress.Constants;
+using Apps.Wordpress.Invocables;
 using Apps.Wordpress.Models.Entities;
 using Apps.Wordpress.Models.Requests.User;
 using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Utils.Extensions.Http;
+using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class UserActions : BaseInvocable
+public class UserActions : WordpressInvocable
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-
     public UserActions(InvocationContext invocationContext) : base(invocationContext)
     {
     }
@@ -24,8 +25,8 @@ public class UserActions : BaseInvocable
     [Action("Get all users", Description = "Get all users")]
     public async Task<AllUsersResponse> GetAllUsers()
     {
-        var client = new CustomWordpressClient(Creds);
-        var users = await client.Users.GetAllAsync(false, true);
+        var request = new WordpressRestRequest("users", Method.Get, Creds);
+        var users = await Client.Paginate<User>(request);
 
         return new()
         {
@@ -37,8 +38,8 @@ public class UserActions : BaseInvocable
     public async Task<WordPressUser> GetUserById(
         [ActionParameter] UserRequest user)
     {
-        var client = new CustomWordpressClient(Creds);
-        var response = await client.Users.GetByIDAsync(user.UserId, true, true);
+        var request = new WordpressRestRequest($"users/{user.UserId}", Method.Get, Creds);
+        var response = await Client.ExecuteWithHandling<User>(request);
 
         return new(response);
     }
@@ -48,18 +49,17 @@ public class UserActions : BaseInvocable
     #region Create
 
     [Action("Add user", Description = "Add user")]
-    public async Task<WordPressUser> AddUser(
-        IEnumerable<AuthenticationCredentialsProvider> Creds,
-        [ActionParameter] AddUser request)
+    public async Task<WordPressUser> AddUser([ActionParameter] AddUser input)
     {
-        var client = new CustomWordpressClient(Creds);
-        var user = await client.Users.CreateAsync(new()
-        {
-            Email = request.Email,
-            UserName = request.UserName,
-            Password = request.Password,
-            Roles = request.Roles
-        });
+        var request = new WordpressRestRequest("users", Method.Post, Creds)
+            .WithJsonBody(new
+            {
+                input.Email,
+                input.Username,
+                input.Password,
+                input.Roles
+            }, JsonConfig.JsonSettings);
+        var user = await Client.ExecuteWithHandling<User>(request);
 
         return new(user);
     }

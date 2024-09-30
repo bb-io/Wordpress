@@ -1,6 +1,5 @@
 ﻿using Apps.Wordpress.Models.Dtos;
 using Blackbird.Applications.Sdk.Common;
-using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Models.Entities;
 

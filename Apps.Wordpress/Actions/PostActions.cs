@@ -1,8 +1,8 @@
 ﻿using System.Net.Mime;
 using System.Text;
 using Apps.Wordpress.Api;
-using Apps.Wordpress.Api.RestSharp;
 using Apps.Wordpress.Extensions;
+using Apps.Wordpress.Invocables;
 using Apps.Wordpress.Models.Dtos;
 using Apps.Wordpress.Models.Entities;
 using Apps.Wordpress.Models.Polylang;
@@ -13,27 +13,23 @@ using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
-using Blackbird.Applications.Sdk.Utils.Parsers;
 using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
 [ActionList]
-public class PostActions : BaseInvocable
+public class PostActions : WordpressInvocable
 {
     private const string Endpoint = "posts";
     
     private readonly IFileManagementClient _fileManagementClient;
-    
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
     
     public PostActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
         : base(invocationContext)
@@ -112,8 +108,8 @@ public class PostActions : BaseInvocable
     [Action("Get post as HTML", Description = "Get post by id as HTML file")]
     public async Task<FileResponse> GetPostByIdAsHtml([ActionParameter] PostRequest input)
     {
-        var client = new CustomWordpressClient(Creds);
-        var post = await client.Posts.GetByIDAsync(input.Id);
+        var request = new WordpressRestRequest($"posts/{input.Id}", Method.Get, Creds);
+        var post = await Client.ExecuteWithHandling<Post>(request);
 
         var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
 
@@ -202,10 +198,8 @@ public class PostActions : BaseInvocable
     [Action("Delete post", Description = "Delete post")]
     public Task DeletePost([ActionParameter] PostRequest post)
     {
-        var client = new CustomWordpressClient(Creds);
-
-        var intPostId = IntParser.Parse(post.Id, nameof(post.Id))!.Value;
-        return client.Posts.DeleteAsync(intPostId);
+        var request = new WordpressRestRequest($"posts/{post.Id}", Method.Delete, Creds);
+        return Client.ExecuteWithHandling(request);
     }
 
     #endregion

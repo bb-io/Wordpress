@@ -1,18 +1,18 @@
 ﻿using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Metadata;
 
-namespace Apps.Wordpress
+namespace Apps.Wordpress;
+
+public class WordpressApplication : IApplication, ICategoryProvider
 {
-    public class WordpressApplication : IApplication, ICategoryProvider
+        
+    public IEnumerable<ApplicationCategory> Categories
     {
+        get => [ApplicationCategory.Cms];
+        set { }
+    }
         
-        public IEnumerable<ApplicationCategory> Categories
-        {
-            get => [ApplicationCategory.Cms];
-            set { }
-        }
-        
-        public string Name
+    public string Name
     {
         get => "Wordpress";
         set { }
@@ -22,5 +22,4 @@ namespace Apps.Wordpress
     {
         throw new NotImplementedException();
     }
-}
 }

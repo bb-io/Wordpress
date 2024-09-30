@@ -1,24 +1,22 @@
 ﻿using Apps.Wordpress.Api;
-using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Authentication;
+using Apps.Wordpress.Invocables;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using RestSharp;
+using WordPressPCL.Models;
 
 namespace Apps.Wordpress.DataSourceHandlers;
 
-public class CommentDataHandler : BaseInvocable, IAsyncDataSourceHandler
+public class CommentDataHandler : WordpressInvocable, IAsyncDataSourceHandler
 {
-    private IEnumerable<AuthenticationCredentialsProvider> Creds =>
-        InvocationContext.AuthenticationCredentialsProviders;
-    
     public CommentDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
     }
 
     public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
-        var client = new CustomWordpressClient(Creds);
-        var comments = await client.Comments.GetAllAsync(false, true);
+        var request = new WordpressRestRequest("comments", Method.Get, Creds);
+        var comments = await Client.Paginate<Comment>(request);
 
         return comments
             .Where(x => context.SearchString == null ||

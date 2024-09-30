@@ -1,13 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Blackbird.Applications.Sdk.Common;
 
-namespace Apps.Wordpress.Models.Polylang
+namespace Apps.Wordpress.Models.Polylang;
+
+public class LanguagesResponse
 {
-    public class LanguagesResponse
-    {
-        public IEnumerable<Language> Languages { get; set;}
-    }
+    public IEnumerable<Language> Languages { get; set;}
+
+    [Display("Default locale")]
+    public string? DefaultLanguageCode { get; set;}
+
+    [Display("Other locales")]
+    public IEnumerable<string> OtherLanguageCodes { get; set;}
 }

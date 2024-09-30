@@ -23,7 +23,7 @@ public class PolylangActions : WordpressInvocable
         {
             Languages = result,
             DefaultLanguageCode = result.FirstOrDefault(x => x.IsDefault)?.Locale,
-            OtherLanguageCodes = result.Select(x => x.Locale),
+            OtherLanguageCodes = result.Where(x => !x.IsDefault).Select(x => x.Locale),
         };
     }
 }

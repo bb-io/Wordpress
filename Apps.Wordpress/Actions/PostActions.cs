@@ -112,6 +112,10 @@ public class PostActions : WordpressInvocable
         var post = await Client.ExecuteWithHandling<Post>(request);
 
         var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
+        
+        var metaTag = $"<meta name=\"blackbird-post-id\" content=\"{post.Id}\">";
+        var headIndex = html.IndexOf("<head>", StringComparison.Ordinal) + "<head>".Length;
+        html = html.Insert(headIndex, metaTag);
 
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,
@@ -130,9 +134,13 @@ public class PostActions : WordpressInvocable
     }
 
     [Action("Create post from HTML", Description = "Create a new post from an HTML file. With Polylang enabled it can also be used to create translations of other posts.")]
-    public Task<WordPressItem> CreatePostFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PostTranslationOptions translationOptions)
+    public async Task<WordPressItem> CreatePostFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PostTranslationOptions translationOptions)
     {
-        return ExecuteModification(input, translationOptions, null);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var fileBytes = await fileStream.GetByteData();
+        var html = Encoding.UTF8.GetString(fileBytes);
+        
+        return await ExecuteModification(html, translationOptions, null);
     }
 
     [Action("Update post", Description = "Update post. With Polylang enabled it can also be used to set the language and update its associations.")]
@@ -146,20 +154,28 @@ public class PostActions : WordpressInvocable
     }
 
     [Action("Update post from HTML", Description = "Update a post from an HTML file. With Polylang enabled it can also be used to set the language and update its associations.")]
-    public Task<WordPressItem> UpdatePostFromHtml(
-        [ActionParameter] PostRequest post,
+    public async Task<WordPressItem> UpdatePostFromHtml(
+        [ActionParameter] PostOptionalRequest post,
         [ActionParameter] FileModificationRequest input,
         [ActionParameter] PostTranslationOptions translationOptions
         )
     {
-        return ExecuteModification(input, translationOptions, post.Id);
-    }    
-
-    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, PostTranslationOptions translationOptions, string? id)
-    {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();
         var html = Encoding.UTF8.GetString(fileBytes);
+        var htmlDocument = html.AsHtmlDocument();
+        
+        var metaTag = htmlDocument.DocumentNode.SelectSingleNode("//meta[@name='blackbird-post-id']");
+        var postIdValue = metaTag?.GetAttributeValue("content", null);
+        
+        var postId = post.Id ?? postIdValue 
+            ?? throw new Exception("Post ID not found in HTML file. Please make sure the file was created with the 'Get post as HTML' action. Or add optional Post ID parameter.");
+        
+        return await ExecuteModification(html, translationOptions, postId);
+    }    
+
+    private async Task<WordPressItem> ExecuteModification(string html, PostTranslationOptions translationOptions, string? id)
+    {
         var htmlDocument = html.AsHtmlDocument();
         var title = htmlDocument.GetTitle();
         var body = htmlDocument.GetBody();

@@ -4,9 +4,9 @@ using Blackbird.Applications.Sdk.Common.Dynamic;
 
 namespace Apps.Wordpress.Models.Requests.Page;
 
-public class PageRequest
+public class PageOptionalRequest
 {
     [Display("Page ID")] 
     [DataSource(typeof(PageDataHandler))]
-    public string Id { get; set; } = string.Empty;
+    public string? Id { get; set; }
 }

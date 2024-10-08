@@ -114,6 +114,10 @@ public class PageActions : WordpressInvocable
         
         var html = (post.Title.Rendered, post.Content.Rendered).AsHtml();
         
+        var metaTag = $"<meta name=\"blackbird-page-id\" content=\"{input.Id}\">";
+        var headIndex = html.IndexOf("<head>", StringComparison.Ordinal) + "<head>".Length;
+        html = html.Insert(headIndex, metaTag);
+        
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes(html));
         var file = await _fileManagementClient.UploadAsync(stream, MediaTypeNames.Text.Html,
             $"{post.Title.Rendered}.html");
@@ -131,9 +135,12 @@ public class PageActions : WordpressInvocable
     }
 
     [Action("Create page from HTML", Description = "Create a new page from an HTML file. With Polylang enabled it can also be used to create translations of other pages.")]
-    public Task<WordPressItem> CreatePageFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PageTranslationOptions translationOptions)
+    public async Task<WordPressItem> CreatePageFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PageTranslationOptions translationOptions)
     {
-        return ExecuteModification(input, translationOptions, null);
+        var fileStream = await _fileManagementClient.DownloadAsync(input.File);
+        var fileBytes = await fileStream.GetByteData();
+        var html = Encoding.UTF8.GetString(fileBytes);
+        return await ExecuteModification(html, translationOptions, null);
     }
 
     [Action("Update page", Description = "Update page. With Polylang enabled it can also be used to set the language and update its associations.")]
@@ -147,20 +154,28 @@ public class PageActions : WordpressInvocable
     }
 
     [Action("Update page from HTML", Description = "Update a page from an HTML file. With Polylang enabled it can also be used to set the language and update its associations.")]
-    public Task<WordPressItem> UpdatePageFromHtml(
-        [ActionParameter] PageRequest page,
+    public async Task<WordPressItem> UpdatePageFromHtml(
+        [ActionParameter] PageOptionalRequest page,
         [ActionParameter] FileModificationRequest input,
         [ActionParameter] PageTranslationOptions translationOptions
         )
     {
-        return ExecuteModification(input, translationOptions, page.Id);
-    }
-
-    private async Task<WordPressItem> ExecuteModification(FileModificationRequest input, PageTranslationOptions translationOptions, string? id)
-    {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();
         var html = Encoding.UTF8.GetString(fileBytes);
+        var htmlDocument = html.AsHtmlDocument();
+
+        var metaTag = htmlDocument.DocumentNode.SelectSingleNode("//meta[@name='blackbird-page-id']");
+        var pageIdValue = metaTag?.GetAttributeValue("content", null);
+
+        var pageId = page.Id ?? pageIdValue
+            ?? throw new Exception("Page ID not found in HTML file. Please make sure the file was created with the 'Get page as HTML' action, or provide the Page ID.");
+
+        return await ExecuteModification(html, translationOptions, pageId);
+    }
+
+    private async Task<WordPressItem> ExecuteModification(string html, PageTranslationOptions translationOptions, string? id)
+    {
         var htmlDocument = html.AsHtmlDocument();
         var title = htmlDocument.GetTitle();
         var body = htmlDocument.GetBody();

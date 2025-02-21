@@ -11,12 +11,6 @@ public class WordpressApplication : IApplication, ICategoryProvider
         get => [ApplicationCategory.Cms];
         set { }
     }
-        
-    public string Name
-    {
-        get => "Wordpress";
-        set { }
-    }
 
     public T GetInstance<T>()
     {

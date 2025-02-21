@@ -2,6 +2,7 @@
 using Apps.Wordpress.Extensions;
 using Apps.Wordpress.Models.Responses;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Newtonsoft.Json;
@@ -59,7 +60,13 @@ public class WordpressRestClient : RestClient
             return response;
 
         var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
-        throw new(error.Message);
+
+        if (error.Message.Contains("No route was found matching the URL and request method") && Options.BaseUrl.AbsolutePath.Contains("pll/v1"))
+        {
+            throw new PluginMisconfigurationException("Could not find Polylang. Please make sure the Polylang plugin is installed.");
+        }
+
+        throw new PluginApplicationException(error.Message);
     }
 
 

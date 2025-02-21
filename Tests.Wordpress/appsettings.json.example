@@ -1,0 +1,8 @@
+{
+  "ConnectionDefinition": {
+    "url": "",
+    "login": "",
+    "applicationPassword": ""
+  },
+  "TestFolder": "TestFiles"
+}

@@ -21,6 +21,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using RestSharp;
 using WordPressPCL.Models;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Wordpress.Actions;
 
@@ -99,7 +100,7 @@ public class PostActions : WordpressInvocable
         var post = await client.ExecuteWithHandling<BaseDto>(request);
 
         if (!post.Translations.ContainsKey(lang.Language))
-            throw new Exception("This post does not have a translation in " + lang.Language);
+            throw new PluginMisconfigurationException("This post does not have a translation in " + lang.Language);
 
         var translationId = post.Translations[lang.Language];
         return await GetPostById(new PostRequest { Id = translationId.ToString()});
@@ -169,7 +170,7 @@ public class PostActions : WordpressInvocable
         var postIdValue = metaTag?.GetAttributeValue("content", null);
         
         var postId = post.Id ?? postIdValue 
-            ?? throw new Exception("Post ID not found in HTML file. Please make sure the file was created with the 'Get post as HTML' action. Or add optional Post ID parameter.");
+            ?? throw new PluginMisconfigurationException("Post ID not found in HTML file. Please make sure the file was created with the 'Get post as HTML' action. Or add optional Post ID parameter.");
         
         return await ExecuteModification(html, translationOptions, postId);
     }    

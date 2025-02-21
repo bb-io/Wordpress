@@ -58,6 +58,9 @@ public class BaseDto
     [JsonProperty("lang")]
     public string Lang { get; set; }
 
+    [JsonProperty("meta")]
+    public Dictionary<string, string> Meta { get; set; }
+
     [JsonProperty("translations")]
     public Dictionary<string, int> Translations { get; set; }
 }

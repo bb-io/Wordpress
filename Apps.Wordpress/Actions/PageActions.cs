@@ -20,6 +20,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using Newtonsoft.Json;
 using RestSharp;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Wordpress.Actions;
 
@@ -99,7 +100,7 @@ public class PageActions : WordpressInvocable
         var post = await client.ExecuteWithHandling<BaseDto>(request);
 
         if (!post.Translations.ContainsKey(lang.Language))
-            throw new Exception("This page does not have a translation in " + lang.Language);
+            throw new PluginMisconfigurationException("This page does not have a translation in " + lang.Language);
 
         var translationId = post.Translations[lang.Language];
         return await GetPageById(new PageRequest { Id = translationId.ToString() });
@@ -169,7 +170,7 @@ public class PageActions : WordpressInvocable
         var pageIdValue = metaTag?.GetAttributeValue("content", null);
 
         var pageId = page.Id ?? pageIdValue
-            ?? throw new Exception("Page ID not found in HTML file. Please make sure the file was created with the 'Get page as HTML' action, or provide the Page ID.");
+            ?? throw new PluginMisconfigurationException("Page ID not found in HTML file. Please make sure the file was created with the 'Get page as HTML' action, or provide the Page ID.");
 
         return await ExecuteModification(html, translationOptions, pageId);
     }

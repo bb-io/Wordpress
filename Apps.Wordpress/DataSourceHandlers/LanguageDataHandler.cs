@@ -6,13 +6,13 @@ using Apps.Wordpress.Models.Polylang;
 
 namespace Apps.Wordpress.DataSourceHandlers;
 
-public class LanguageDataHandler : WordpressInvocable, IAsyncDataSourceHandler
+public class LanguageDataHandler : WordpressInvocable, IAsyncDataSourceItemHandler
 {
     public LanguageDataHandler(InvocationContext invocationContext) : base(invocationContext)
     {
     }
 
-    public async Task<Dictionary<string, string>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
     {
         var request = new WordpressRestRequest("/languages", RestSharp.Method.Get, Creds);
         var result = await PolylangClient.ExecuteWithHandling<List<Language>>(request);
@@ -20,6 +20,6 @@ public class LanguageDataHandler : WordpressInvocable, IAsyncDataSourceHandler
         return result
             .Where(x => context.SearchString == null ||
                         x.Name.Contains(context.SearchString, StringComparison.OrdinalIgnoreCase))
-            .ToDictionary(x => x.Slug, x => x.Name);
+            .Select(x => new DataSourceItem(x.Slug, x.Name));
     }
 }

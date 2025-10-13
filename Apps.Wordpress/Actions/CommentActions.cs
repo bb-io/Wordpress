@@ -13,7 +13,7 @@ using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Comments")]
 public class CommentActions : WordpressInvocable
 {
     public CommentActions(InvocationContext invocationContext) : base(invocationContext)

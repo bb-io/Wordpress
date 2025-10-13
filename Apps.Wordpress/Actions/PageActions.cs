@@ -24,7 +24,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Pages")]
 public class PageActions : WordpressInvocable
 {
     private const string Endpoint = "pages";

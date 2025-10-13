@@ -12,7 +12,7 @@ using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Media")]
 public class MediaActions : WordpressInvocable
 {
     private readonly IFileManagementClient _fileManagementClient;

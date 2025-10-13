@@ -6,7 +6,7 @@ using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Polylang")]
 public class PolylangActions : WordpressInvocable
 {
     public PolylangActions(InvocationContext invocationContext) : base(invocationContext)

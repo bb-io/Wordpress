@@ -13,7 +13,7 @@ using WordPressPCL.Models;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Users")]
 public class UserActions : WordpressInvocable
 {
     public UserActions(InvocationContext invocationContext) : base(invocationContext)

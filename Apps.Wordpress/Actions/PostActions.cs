@@ -25,7 +25,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Wordpress.Actions;
 
-[ActionList]
+[ActionList("Posts")]
 public class PostActions : WordpressInvocable
 {
     private const string Endpoint = "posts";

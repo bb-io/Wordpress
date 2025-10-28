@@ -356,3 +356,4 @@ healthchecksdb
 *.env
 /ConsoleApp1
 /Tests.Wordpress/appsettings.json
+/Tests.Wordpress/appsettings.json

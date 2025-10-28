@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Apps.Wordpress.Models.Dtos;
 
@@ -59,7 +60,7 @@ public class BaseDto
     public string Lang { get; set; }
 
     [JsonProperty("meta")]
-    public Dictionary<string, string> Meta { get; set; }
+    public JToken Meta { get; set; }
 
     [JsonProperty("translations")]
     public Dictionary<string, int> Translations { get; set; }

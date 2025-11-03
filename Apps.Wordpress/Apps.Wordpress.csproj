@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Wordpress (+ Polylang)</Product>
-    <Version>1.2.6</Version>
+    <Version>1.2.7</Version>
     <Description>The world’s most popular website builder</Description>
     <AssemblyName>Apps.Wordpress</AssemblyName>
   </PropertyGroup>

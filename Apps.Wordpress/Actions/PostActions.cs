@@ -1,6 +1,5 @@
-﻿using System.Net.Mime;
-using System.Text;
-using Apps.Wordpress.Api;
+﻿using Apps.Wordpress.Api;
+using Apps.Wordpress.DataSourceHandlers.Static;
 using Apps.Wordpress.Extensions;
 using Apps.Wordpress.Invocables;
 using Apps.Wordpress.Models.Dtos;
@@ -13,15 +12,18 @@ using Apps.Wordpress.Models.Responses;
 using Apps.Wordpress.Models.Responses.All;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
 using Blackbird.Applications.Sdk.Utils.Html.Extensions;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using RestSharp;
+using System.Net.Mime;
+using System.Text;
 using WordPressPCL.Models;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Wordpress.Actions;
 
@@ -129,36 +131,41 @@ public class PostActions : WordpressInvocable
     #region Post & Update
 
     [Action("Create post", Description = "Create a new post. With Polylang enabled it can also be used to create translations of other posts.")]
-    public Task<WordPressItem> CreatePost([ActionParameter] ModificationRequest input, [ActionParameter] PostTranslationOptions translationOptions)
+    public Task<WordPressItem> CreatePost([ActionParameter] ModificationRequest input, 
+        [ActionParameter] PostTranslationOptions translationOptions,
+        [ActionParameter][StaticDataSource(typeof(PostStatusDataHandler))] string? Status)
     {
-        return ExecuteModification(input, translationOptions, null);       
+        return ExecuteModification(input, translationOptions, null, Status);       
     }
 
     [Action("Create post from HTML", Description = "Create a new post from an HTML file. With Polylang enabled it can also be used to create translations of other posts.")]
-    public async Task<WordPressItem> CreatePostFromHtml([ActionParameter] FileModificationRequest input, [ActionParameter] PostTranslationOptions translationOptions)
+    public async Task<WordPressItem> CreatePostFromHtml([ActionParameter] FileModificationRequest input, 
+        [ActionParameter] PostTranslationOptions translationOptions,
+        [ActionParameter][StaticDataSource(typeof(PostStatusDataHandler))] string? Status)
     {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
         var fileBytes = await fileStream.GetByteData();
         var html = Encoding.UTF8.GetString(fileBytes);
         
-        return await ExecuteModification(html, translationOptions, null);
+        return await ExecuteModification(html, translationOptions, null, Status);
     }
 
     [Action("Update post", Description = "Update post. With Polylang enabled it can also be used to set the language and update its associations.")]
     public Task<WordPressItem> UpdatePost(
         [ActionParameter] PostRequest post, 
         [ActionParameter] ModificationRequest input, 
-        [ActionParameter] PostTranslationOptions translationOptions
-        )
+        [ActionParameter] PostTranslationOptions translationOptions,
+        [ActionParameter] [StaticDataSource(typeof(PostStatusDataHandler))] string? Status)
     {
-        return ExecuteModification(input, translationOptions, post.Id);
+        return ExecuteModification(input, translationOptions, post.Id, Status);
     }
 
     [Action("Update post from HTML", Description = "Update a post from an HTML file. With Polylang enabled it can also be used to set the language and update its associations.")]
     public async Task<WordPressItem> UpdatePostFromHtml(
         [ActionParameter] PostOptionalRequest post,
         [ActionParameter] FileModificationRequest input,
-        [ActionParameter] PostTranslationOptions translationOptions
+        [ActionParameter] PostTranslationOptions translationOptions,
+        [ActionParameter][StaticDataSource(typeof(PostStatusDataHandler))] string? Status
         )
     {
         var fileStream = await _fileManagementClient.DownloadAsync(input.File);
@@ -172,27 +179,34 @@ public class PostActions : WordpressInvocable
         var postId = post.Id ?? postIdValue 
             ?? throw new PluginMisconfigurationException("Post ID not found in HTML file. Please make sure the file was created with the 'Get post as HTML' action. Or add optional Post ID parameter.");
         
-        return await ExecuteModification(html, translationOptions, postId);
+        return await ExecuteModification(html, translationOptions, postId, Status);
     }    
 
-    private async Task<WordPressItem> ExecuteModification(string html, PostTranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(string html, PostTranslationOptions translationOptions, string? id, string? status)
     {
         var htmlDocument = html.AsHtmlDocument();
         var title = htmlDocument.GetTitle();
         var body = htmlDocument.GetBody();
-        return await ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id);
+        return await ExecuteModification(new ModificationRequest { Title = title, Content = body }, translationOptions, id, status);
     }
 
-    private async Task<WordPressItem> ExecuteModification(ModificationRequest input, PostTranslationOptions translationOptions, string? id)
+    private async Task<WordPressItem> ExecuteModification(ModificationRequest input, PostTranslationOptions translationOptions, string? id, string? status)
     {
         var client = new WordpressRestClient(Creds);
         var request = new WordpressRestRequest(Endpoint + (id == null ? "" : $"/{id}"), Method.Post, Creds);
 
-        request.AddJsonBody(new
+        var body = new Dictionary<string, object>
         {
-            title = input.Title,
-            content = input.Content
-        });
+            ["title"] = input.Title,
+            ["content"] = input.Content
+        };
+
+        if (!string.IsNullOrEmpty(status))
+        {
+            body["status"] = status;
+        }
+
+        request.AddJsonBody(body);
 
         if (translationOptions.Language != null)
             request.AddQueryParameter("lang", translationOptions.Language);

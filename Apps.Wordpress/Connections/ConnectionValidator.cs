@@ -15,22 +15,11 @@ public class ConnectionValidator : IConnectionValidator
         var client = new WordpressRestClient(creds);
 
         var request = new WordpressRestRequest("users", Method.Get, creds);
-
-        try
+        await client.ExecuteWithHandling(request);
+        
+        return new()
         {
-            var w = await client.ExecuteWithHandling(request);
-            return new()
-            {
-                IsValid = true
-            };
-        }
-        catch (Exception ex)
-        {
-            return new ConnectionValidationResponse
-            {
-                IsValid = false,
-                Message = ex.Message
-            };
-        }
+            IsValid = true
+        };
     }
 }

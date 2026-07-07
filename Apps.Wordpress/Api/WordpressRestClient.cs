@@ -5,8 +5,11 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.Extensions.System;
+using Blackbird.Applications.Sdk.Utils.Html.Extensions;
 using Newtonsoft.Json;
 using RestSharp;
+using System.Net;
+using System.Text.RegularExpressions;
 
 namespace Apps.Wordpress.Api;
 
@@ -59,14 +62,15 @@ public class WordpressRestClient : RestClient
         if (response.IsSuccessStatusCode)
             return response;
 
-        var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content);
+        var errorMessage = GetErrorMessage(response);
 
-        if (error.Message.Contains("No route was found matching the URL and request method") && Options.BaseUrl.AbsolutePath.Contains("pll/v1"))
+        if (errorMessage.Contains("No route was found matching the URL and request method") &&
+            Options.BaseUrl.AbsolutePath.Contains("pll/v1"))
         {
             throw new PluginMisconfigurationException("Could not find Polylang. Please make sure the Polylang plugin is installed.");
         }
 
-        throw new PluginApplicationException(error.Message);
+        throw new PluginApplicationException(errorMessage);
     }
 
 
@@ -78,5 +82,69 @@ public class WordpressRestClient : RestClient
         {
             BaseUrl = url
         };
+    }
+
+    private static string GetErrorMessage(RestResponse response)
+    {
+        var content = response.Content;
+        if (string.IsNullOrWhiteSpace(content))
+            return response.ErrorMessage ?? $"Request failed with status code {(int)response.StatusCode}";
+
+        if (TryGetJsonErrorMessage(content, out var jsonErrorMessage))
+            return jsonErrorMessage;
+
+        if (IsHtmlResponse(response, content))
+            return GetHtmlErrorMessage(response.StatusCode, content);
+
+        return response.ErrorMessage ?? content;
+    }
+
+    private static bool TryGetJsonErrorMessage(string content, out string errorMessage)
+    {
+        try
+        {
+            var error = JsonConvert.DeserializeObject<ErrorResponse>(content);
+            if (!string.IsNullOrWhiteSpace(error?.Message))
+            {
+                errorMessage = error.Message;
+                return true;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        errorMessage = string.Empty;
+        return false;
+    }
+
+    private static bool IsHtmlResponse(RestResponse response, string content)
+    {
+        return response.ContentType?.Contains("html", StringComparison.OrdinalIgnoreCase) == true ||
+               content.TrimStart().StartsWith("<", StringComparison.Ordinal);
+    }
+
+    private static string GetHtmlErrorMessage(HttpStatusCode statusCode, string content)
+    {
+        var document = content.AsHtmlDocument();
+        var title = document.DocumentNode.SelectSingleNode("//title")?.InnerText?.Trim();
+        var bodyText = document.DocumentNode.SelectSingleNode("//body")?.InnerText;
+        var normalizedBody = NormalizeWhitespace(WebUtility.HtmlDecode(bodyText ?? string.Empty));
+
+        if (!string.IsNullOrWhiteSpace(title) && normalizedBody.Contains(title, StringComparison.OrdinalIgnoreCase))
+        {
+            normalizedBody = NormalizeWhitespace(Regex.Replace(normalizedBody, Regex.Escape(title), string.Empty, RegexOptions.IgnoreCase));
+        }
+
+        var details = string.Join(": ", new[] { title, normalizedBody }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+        return string.IsNullOrWhiteSpace(details)
+            ? $"Request failed with status code {(int)statusCode}"
+            : $"Request failed with status code {(int)statusCode}: {details}";
+    }
+
+    private static string NormalizeWhitespace(string value)
+    {
+        return Regex.Replace(value, "\\s+", " ").Trim();
     }
 }

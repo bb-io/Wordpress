@@ -24,12 +24,12 @@ public class ConnectionValidator : IConnectionValidator
                 IsValid = true
             };
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             return new ConnectionValidationResponse
             {
                 IsValid = false,
-                Message = "Invalid connection parameters"
+                Message = ex.Message
             };
         }
     }

@@ -40,11 +40,10 @@ public class WordpressRestClient : RestClient
 
             var response = await ExecuteWithHandling(request);
             totalPages ??= int.Parse(response.Headers.First(x => x.Name!.Equals("X-Wp-Totalpages", StringComparison.OrdinalIgnoreCase)).Value.ToString());
-            var content = response.Content;
 
             var data = JsonConvert.DeserializeObject<T[]>(response.Content);
             result.AddRange(data);
-        } while (page < totalPages);
+        } while (page <= totalPages);
 
         return result;
     }

@@ -4,7 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Wordpress (+ Polylang)</Product>
-    <Version>1.2.10</Version>
+    <Version>1.2.11</Version>
     <Description>The world’s most popular website builder</Description>
     <AssemblyName>Apps.Wordpress</AssemblyName>
   </PropertyGroup>
@@ -19,8 +19,6 @@
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.png"></EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\README.md">
-      <Link>README.md</Link>
-    </Content>
+    <EmbeddedResource Include="..\README.md" Link="README.md" CopyToOutputDirectory="Always" />
   </ItemGroup>
 </Project>

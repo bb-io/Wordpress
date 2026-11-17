@@ -18,7 +18,8 @@ public class ConnectionValidator : IConnectionValidator
 
         try
         {
-            var w = await client.ExecuteWithHandling(request);
+            await client.ExecuteWithHandling(request);
+            
             return new()
             {
                 IsValid = true
